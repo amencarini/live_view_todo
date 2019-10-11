@@ -1,0 +1,84 @@
+<section class="todoapp">
+  <header class="header">
+    <h1>todos</h1>
+    <form phx-submit="add-todo">
+      <input name="text" class="new-todo" placeholder="What needs to be done?" autofocus>
+    </form>
+  </header>
+  <section class="main">
+    <%= if Enum.any?(@todos) do %>
+      <form phx-change="toggle-all">
+        <%= content_tag :input,
+          nil,
+          type: "checkbox",
+          id: "toggle-all",
+          class: "toggle-all",
+          name: "toggle-all",
+          checked: if !Enum.any?(@todos, fn t -> t.state == "active" end), do: "checked"
+        %>
+        <label for="toggle-all">Mark all as complete</label>
+      </form>
+    <% end %>
+    <ul class="todo-list">
+      <%= for todo <- @todos, todo_visible?(todo, @filter) do %>
+        <%= content_tag :li, phx_hook: "Todo", class: todo_classes(todo) do %>
+          <div class="view">
+            <%= content_tag :input,
+              nil,
+              type: "checkbox",
+              class: "toggle",
+              phx_click: "toggle",
+              phx_value_todo_id: todo.id,
+              checked: if todo.state == "completed", do: "checked"
+            %>
+            <label phx-value-todo-id="<%= todo.id %>">
+              <%= todo.text %>
+            </label>
+            <button class="destroy" phx-click="destroy" phx-value-todo-id="<%= todo.id %>"></button>
+          </div>
+          <form phx-change="change" phx-submit="submit-change">
+            <input
+              class="edit"
+              name="title"
+              phx-value-todo-id="<%= todo.id %>"
+              phx-blur="stop-editing"
+              value="<%= todo.text %>"
+            >
+          </form>
+        <% end %>
+      <% end %>
+    </ul>
+  </section>
+  <%= if Enum.any?(@todos) do %>
+    <footer class="footer">
+      <span class="todo-count">
+        <%= left_count_label(@todos) %>
+      </span>
+      <ul class="filters">
+        <li>
+          <%= live_link "All",
+            to: Routes.live_path(@socket, LiveViewTodoWeb.TodoAppLive, "all"),
+            class: selected_class(@filter, "all")
+          %>
+        </li>
+        <li>
+          <%= live_link "Active",
+            to: Routes.live_path(@socket, LiveViewTodoWeb.TodoAppLive, "active"),
+            class: selected_class(@filter, "active")
+          %>
+        </li>
+        <li>
+          <%= live_link "Completed",
+            to: Routes.live_path(@socket, LiveViewTodoWeb.TodoAppLive, "completed"),
+            class: selected_class(@filter, "completed")
+          %>
+        </li>
+      </ul>
+      <%= if Enum.any?(@todos, fn t -> t.state == "completed" end) do %>
+        <button class="clear-completed" phx-click="clear-completed">
+          Clear completed
+        </button>
+      <% end %>
+    </footer>
+  <% end %>
+</section>
